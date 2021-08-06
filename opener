@@ -9,7 +9,7 @@ mime_type="$(file -b --mime-type "$1")"
 
 case "$mime_type" in
 	text/html|application/x-mimearchive|message/rfc822)
-    	select ops in exit weaver vimb chromium firefox w3m links elinks; do
+    		select ops in exit weaver vimb chromium firefox w3m links elinks; do
 			[[ $ops = exit ]] && exit
 			[[ $ops = w3m || $ops = links || $ops = elinks ]] && $TERMINAL -x "$ops" "$1" &
 			"$ops" "$1" &> /dev/null &
@@ -21,7 +21,7 @@ case "$mime_type" in
     ;;
 
     image/*)
-    	select ops in exit sxiv feh mtpaint gifview gimp; do
+    		select ops in exit sxiv feh mtpaint gifview gimp; do
 			[[ $ops = exit ]] && exit
 			[[ $ops = gifview ]] && gifview -a "$1" &
 			"$ops" "$1" &> /dev/null &
@@ -29,7 +29,7 @@ case "$mime_type" in
     ;;
 
     video/*)
-    	select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
+    		select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
 			[[ $ops = exit ]] && exit
 			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
 			"$ops" "$1" &
@@ -37,7 +37,7 @@ case "$mime_type" in
     ;;
 
     audio/*)
-    	select ops in exit mpv vlc cvlc ffplay ffprobe soxi mediainfo mpg123 mplayer; do
+    		select ops in exit mpv vlc cvlc ffplay ffprobe soxi mediainfo mpg123 mplayer; do
 			[[ $ops = exit ]] && exit
 			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
 			"$ops" "$1" &
