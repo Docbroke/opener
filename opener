@@ -34,7 +34,7 @@ case "$mime_type" in
 			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
 			"$ops" "$1" &
 		done
-    ;;
+	;;
 
 	audio/*)
 		select ops in exit mpv vlc cvlc ffplay ffprobe soxi mediainfo mpg123 mplayer; do
