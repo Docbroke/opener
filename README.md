@@ -17,3 +17,6 @@ find the mimetype of file using
     file -bi $file
 
 and add the mimetype with commands to open it in opener.
+
+Here is video to show my workflow using run, opener and w3m-dmenu scripts.
+https://youtu.be/e5Lutp0dWTk
