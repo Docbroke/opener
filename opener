@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+export TERMINAL=terminator
+
+[[ -z $1 || ! -e $1 ]] &&
+    exit 1
+
+mime_type="$(file -b --mime-type "$1")"
+
+case "$mime_type" in
+	text/html|application/x-mimearchive|message/rfc822)
+    	select ops in exit weaver vimb chromium firefox w3m links elinks; do
+			[[ $ops = exit ]] && exit
+			[[ $ops = w3m || $ops = links || $ops = elinks ]] && $TERMINAL -x "$ops" "$1" &
+			"$ops" "$1" &> /dev/null &
+		done
+	;;
+
+    text/*|*/xml|application/x-httpd-php3|application/x-httpd-php4|application/x-httpd-php5|application/x-shellscript)
+		$TERMINAL -x "${VISUAL:-${EDITOR:-vis}}" "$@"
+    ;;
+
+    image/*)
+    	select ops in exit sxiv feh mtpaint gifview gimp; do
+			[[ $ops = exit ]] && exit
+			[[ $ops = gifview ]] && gifview -a "$1" &
+			"$ops" "$1" &> /dev/null &
+		done
+    ;;
+
+    video/*)
+    	select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
+			[[ $ops = exit ]] && exit
+			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
+			"$ops" "$1" &
+		done
+    ;;
+
+    audio/*)
+    	select ops in exit mpv vlc cvlc ffplay ffprobe soxi mediainfo mpg123 mplayer; do
+			[[ $ops = exit ]] && exit
+			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
+			"$ops" "$1" &
+		done
+    ;;
+
+    application/pdf*)
+		select ops in exit mupdf xournalpp pdfinfo xreader evince zathura qpdfview; do
+			[[ $ops = exit ]] && exit
+			$ops "$1" &
+		done
+    ;;
+	application/octet-stream)
+		case "$1" in
+			*.chm|*.CHM) 
+				select ops in exit kchmviewer xchm chmopen; do
+					[[ $ops = exit ]] && exit
+					$ops "$1" &
+				done
+			;;
+			*.gpg)
+				gpg -d "$1"
+			;;
+			*)
+				echo "unknow filetype"
+			;;
+		esac
+	;;
+	application/vnd.ms-htmlhelp)
+		select ops in exit kchmviewer xchm chmopen; do
+			[[ $ops = exit ]] && exit
+			$ops "$1" &
+		done
+	;;
+
+	application/vnd.comicbook*)
+		select ops in exit mupdf foliate; do
+			[[ $ops = exit ]] && exit
+			$ops "$1" &
+		done
+	;;
+
+    application/epub+zip|application/x-mobipocket-ebook)
+		select ops in exit epy mupdf foliate; do
+			case $ops in
+				exit) exit ;;
+				epy) terminator -p Large -x epy.py "$1" ;;
+				*) $ops "$1" &> /dev/null & ;;
+			esac
+		done
+	;;
+
+	application/pgp-encrypted)
+		gpg -d "$1"
+	;;
+
+	application/*zip*|application/x-?ar|application/x-?z)
+		case "$1" in
+			*.xoj|*.xopp) xournalpp "$1" &> /dev/null & ;;
+			*.cb?) 
+				select ops in exit mupdf foliate; do
+					[[ $ops = exit ]] && exit
+					"$ops" "$1" &> /dev/null &
+				done
+			;;
+			*)
+				select ops in exit als lsar unar aunpack; do
+					[[ $ops = exit ]] && exit
+					[[ $ops = aunpack ]] && aunpack -D "$1"
+					"$ops" "$1"
+				done
+			;;
+		esac
+	;;
+
+	*opendocument*|*openxmlformats*|*msword|*ms-excel|*ms-powerpoint)
+		libreoffice "$1" --norestore &> /dev/null
+    ;;
+
+    inode/x-empty)
+    	echo "empty file"
+    	rm -i "$1"
+    ;;
+
+    *) 
+		case "$@" in
+			*) echo "no filetype association for $@" ;;
+		esac
+    ;;
+esac
