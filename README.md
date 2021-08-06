@@ -5,15 +5,15 @@ How to use:
 
 open $file
 
-"opener $file"
+    opener $file
 
 search file using fzf and open
 
-opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"
+    opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"
 
 How to configure:
 find the mimetype of file using
 
-file -bi $file
+    file -bi $file
 
 and add the mimetype with commands to open it in opener.
