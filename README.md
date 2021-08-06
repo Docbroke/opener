@@ -11,10 +11,10 @@ search file using fzf and open
 
     opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"
 This can be a function in .bashrc
-        of() {
-        opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"
-        }
 
+    of() { 
+    opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")" 
+    }
 
 How to configure:
 find the mimetype of file using
