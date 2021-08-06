@@ -4,11 +4,16 @@ Shell based file opener using mimetypes as well as file extension. This does not
 How to use:
 
 open $file
-[code]opener $file[/code]
+
+"opener $file"
+
 search file using fzf and open
-[code]opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"[/code]
+
+opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"
 
 How to configure:
-find the mimetype of file using 
-[code]file -bi $file[/code]
+find the mimetype of file using
+
+file -bi $file
+
 and add the mimetype with commands to open it in opener.
