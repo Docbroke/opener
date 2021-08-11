@@ -1,5 +1,5 @@
 # opener
-Shell based file opener using mimetypes as well as file extension. This does not depend on desktop files. 
+Shell based file opener using mimetypes as well as file extension inspired from https://github.com/dylanaraps/fff/issues/101. This does not depend on desktop files. 
 
 How to use:
 
