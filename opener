@@ -9,15 +9,31 @@ mime_type="$(file -b --mime-type "$1")"
 
 case "$mime_type" in
 	text/html|text/xml|application/x-mimearchive|message/rfc822)
-			select ops in exit weaver $BROWSER vimb chromium firefox w3m links elinks $EDITOR; do
-			[[ $ops = exit ]] && exit
-			[[ $ops = w3m || $ops = links || $ops = elinks || $EDITOR ]] && $TERMINAL -x "$ops" "$1" &
-			"$ops" "$1" &> /dev/null &
-		done
+		if [[ $TERM = linux && -n $DISPLAY ]]; then
+			select ops in exit weaver "$BROWSER" vimb chromium firefox w3m links elinks $EDITOR; do
+				[[ $ops = exit ]] && exit
+				[[ $ops = w3m || $ops = links || $ops = elinks || $EDITOR ]] && $TERMINAL -x "$ops" "$1" &
+				"$ops" "$1" &> /dev/null &
+			done
+		elif [[ $TERM != linux && -n $DISPLAY ]]; then
+			select ops in exit weaver "$BROWSER" vimb chromium firefox w3m links elinks $EDITOR; do
+				[[ $ops = exit ]] && exit
+				"$ops" "$1" 
+			done
+		else
+			select ops in exit w3m links elinks $EDITOR; do
+				[[ $ops = exit ]] && exit
+				"$ops" "$1" 
+			done
+		fi
 	;;
 
 	text/*|*/xml|application/x-httpd-php3|application/x-httpd-php4|application/x-httpd-php5|application/x-shellscript)
-		$TERMINAL -x "${VISUAL:-${EDITOR:-vis}}" "$@"
+		if [[ $TERM = linux && -n $DISPLAY ]]; then
+			$TERMINAL -x "${VISUAL:-${EDITOR:-vis}}" "$@"
+		else
+			"${VISUAL:-${EDITOR:-vis}}" "$@"
+		fi
 	;;
 
 	image/*)
@@ -29,11 +45,15 @@ case "$mime_type" in
 	;;
 
 	video/*|application/x-matroska)
-		select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
-			[[ $ops = exit ]] && exit
-			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
-			"$ops" "$1" &
-		done
+		if [[ -n $DISPLAY ]]; then
+			select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
+				[[ $ops = exit ]] && exit
+				[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
+				"$ops" "$1" &
+			done
+		else
+			mpv --vo=drm -- "$1"
+		fi
 	;;
 
 	audio/*| application/ogg|application/x-ogg|application/mxf|application/sdp|application/smil|application/x-smil|application/streamingmedia|application/x-streamingmedia|application/vnd.rn-realmedia|application/vnd.rn-realmedia-vbr)
@@ -47,7 +67,7 @@ case "$mime_type" in
 	application/pdf|application/x-pdf|application/x-cbz|applilcation/oxps|application/vnd.ms-xpsdocument)
 		select ops in exit mupdf xournalpp pdfinfo xreader evince zathura qpdfview; do
 			[[ $ops = exit ]] && exit
-			$ops "$1" &
+			$ops "$1" &> /dev/null &
 		done
 	;;
 	application/octet-stream)
@@ -115,7 +135,14 @@ case "$mime_type" in
 	;;
 
 	*opendocument*|*openxmlformats*|*msword|*ms-excel|*ms-powerpoint|*abiword|*write*)
-		libreoffice "$1" --norestore &> /dev/null
+		[[ -n $DISPLAY ]] && libreoffice "$1" --norestore &> /dev/null
+		[[ -z $DISPLAY ]] && \
+			case "$1" in
+				*.odt|*.odp|*.ods|*.sxw) odt2txt "$1" ;;
+				*.doc) antiword "$1" ;;
+				*.docx) docx2txt "$1" - | $PAGER ;;
+				*) echo "unable to open" ;;
+			esac
 	;;
 
 	inode/directory)
