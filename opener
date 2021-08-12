@@ -37,11 +37,15 @@ case "$mime_type" in
 	;;
 
 	image/*)
-		select ops in exit sxiv feh mtpaint gifview gimp; do
-			[[ $ops = exit ]] && exit
-			[[ $ops = gifview ]] && gifview -a "$1" &
-			"$ops" "$1" &> /dev/null &
-		done
+		if [[ -n $DISPLAY ]]; then
+			select ops in exit sxiv feh mtpaint gifview gimp; do
+				[[ $ops = exit ]] && exit
+				[[ $ops = gifview ]] && gifview -a "$1" &
+				"$ops" "$1" &> /dev/null &
+			done
+		else
+			fbi "$1"
+		fi
 	;;
 
 	video/*|application/x-matroska)
@@ -64,8 +68,19 @@ case "$mime_type" in
 		done
 	;;
 
-	application/pdf|application/x-pdf|application/x-cbz|applilcation/oxps|application/vnd.ms-xpsdocument)
-		select ops in exit mupdf xournalpp pdfinfo xreader evince zathura qpdfview; do
+	application/pdf|application/x-pdf)
+		if [[ -n $DISPLAY ]]; then
+			select ops in exit mupdf xournalpp pdfinfo xreader evince zathura qpdfview; do
+				[[ $ops = exit ]] && exit
+				$ops "$1" &> /dev/null &
+			done
+		else
+			fbgs "$1"
+		fi
+	;;
+	
+	application/x-cbz|applilcation/oxps|application/vnd.ms-xpsdocument)
+		select ops in exit mupdf xreader evince zathura; do
 			[[ $ops = exit ]] && exit
 			$ops "$1" &> /dev/null &
 		done
