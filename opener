@@ -3,7 +3,10 @@
 [[ -z $1 || ! -e $1 ]] &&
 	exit 1
 
-mime_type="$(file -b --mime-type "$1")"
+## mimetype from perl-file-mimeinfo gives better results compared to file
+type mimetype &> /dev/null && mime_type="$(mimetype -b "$1")" || \
+	mime_type="$(file -b --mime-type "$1")"
+
 
 case "$mime_type" in
 	text/html|text/xml|application/x-mimearchive|message/rfc822)
@@ -93,6 +96,15 @@ case "$mime_type" in
 			;;
 			*.gpg)
 				gpg -d "$1"
+			;;
+			*.mobi)
+				select ops in exit epy foliate; do
+					case $ops in
+						exit) exit ;;
+						epy) terminator -p Large -x epy.py "$1" ;;
+						*) $ops "$1" &> /dev/null & ;;
+					esac
+				done
 			;;
 			*)
 				echo "unknow filetype, probably binary"
