@@ -36,7 +36,7 @@ case "$mime_type" in
 
 	image/*)
 		if [[ -n $DISPLAY ]]; then
-			select ops in exit sxiv feh mtpaint gifview gimp; do
+			select ops in exit sxiv feh mtpaint lp gifview gimp; do
 				[[ $ops = exit ]] && exit
 				[[ $ops = gifview ]] && gifview -a "$1" &
 				"$ops" "$1" &> /dev/null &
@@ -50,7 +50,7 @@ case "$mime_type" in
 		if [[ -n $DISPLAY ]]; then
 			select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
 				[[ $ops = exit ]] && exit
-				[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
+				[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" && exit
 				"$ops" "$1" &
 			done
 		else
@@ -68,7 +68,7 @@ case "$mime_type" in
 
 	application/pdf|application/x-pdf)
 		if [[ -n $DISPLAY ]]; then
-			select ops in exit mupdf xournalpp pdfinfo xreader evince zathura qpdfview; do
+			select ops in exit mupdf xournalpp lp pdfinfo xreader evince zathura qpdfview; do
 				[[ $ops = exit ]] && exit
 				$ops "$1" &> /dev/null &
 			done
@@ -95,7 +95,7 @@ case "$mime_type" in
 				gpg -d "$1"
 			;;
 			*)
-				echo "unknow filetype"
+				echo "unknow filetype, probably binary"
 			;;
 		esac
 	;;
@@ -127,7 +127,7 @@ case "$mime_type" in
 		gpg -d "$1"
 	;;
 
-	application/*zip*|application/x-?ar|application/x-?z)
+	application/*zip*|application/x-?ar|application/x-?z*)
 		case "$1" in
 			*.xoj|*.xopp) xournalpp "$1" &> /dev/null ;;
 			*.cb?) 
