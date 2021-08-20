@@ -25,6 +25,7 @@ How to configure:
 find the mimetype of file using
 
     file -bi $file
+    mimetype -b $file
 
 and add the mimetype with commands to open it in opener.
 
