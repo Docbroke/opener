@@ -1,109 +1,151 @@
 #!/usr/bin/env bash
+## TODO: when called with -d, use default program
 
-[[ -z $1 || ! -e $1 ]] &&
+
+getopts d: name
+case $name in
+	d) file=$OPTARG
+		default=true ;;
+	*) file="$@" ;;
+esac
+
+[[ -z $file || ! -e $file ]] &&
 	exit 1
 
 ## mimetype from perl-file-mimeinfo gives better results compared to file
-type mimetype &> /dev/null && mime_type="$(mimetype -b "$1")" || \
-	mime_type="$(file -b --mime-type "$1")"
+type mimetype &> /dev/null && mime_type="$(mimetype -b "$file")" || \
+	mime_type="$(file -b --mime-type "$file")"
 
+## create some lists
+XBROWSERS=("firefox" "chromium" "vimb" "qutebrowser" "weaver" "vivaldi")
+TBROWSERS=("w3m" "links" "lynx" "elinks")
+XEDITORS=("gvim" "geany" "leafpad" "mousepad")
+TEDITORS=("cat" "less" "vim" "vis" "nano" "micro")
+XFMS=("pcmanfm" "nautilus" "rof" "thunar")
+TFMS=("vifm" "ranger" "mc" "fff" "nnn" "clifm")
+PDFVIEWERS=("llpp" "xournalpp" "mupdf" "qpdfview")
+DOCVIEWERS=("llpp" "foliate" "mupdf" "qpdfview")
+CHMVIEWERS=("kchmviewer" "xchm" "chmopen")
+BOOKVIEWERS=("$TERMINAL -p Large -x epy.py" "foliate" "llpp" "mupdf")
+
+## some defaults
+PLAYER=mpv
+VIEWER=sxiv
+TERMINAL=terminator
+EDITOR=vis
+BROWSER=weaver
+PDFVIEWER=llpp
+DOCVIEWER=llpp
+CHMVIEWER=kchmviewer
+BOOKVIEWER="$TERMINAL -p Large -x epy.py"
 
 case "$mime_type" in
 	text/html|text/xml|application/x-mimearchive|message/rfc822)
+		[[ $default == true ]] && $BROWSER "$file" && exit
 		if [[ $TERM = linux && -n $DISPLAY ]]; then
-			select ops in exit weaver "$BROWSER" vimb chromium firefox w3m links elinks $EDITOR; do
+			select ops in exit "${XBROWSERS[@]}" "${TBROWSERS[@]}" $EDITOR; do
 				[[ $ops = exit ]] && exit
-				[[ $ops = w3m || $ops = links || $ops = elinks || $EDITOR ]] && $TERMINAL -x "$ops" "$1" &
-				"$ops" "$1" &> /dev/null &
+				[[ $ops = w3m || $ops = links || $ops = elinks || $EDITOR ]] && $TERMINAL -x "$ops" "$file" &
+				"$ops" "$file" &> /dev/null &
 			done
 		elif [[ $TERM != linux && -n $DISPLAY ]]; then
-			select ops in exit weaver "$BROWSER" vimb chromium firefox w3m links elinks $EDITOR; do
+			select ops in exit "${XBROWSERS[@]}" "${TBROWSERS[@]}" $EDITOR; do
 				[[ $ops = exit ]] && exit
-				"$ops" "$1" 
+				"$ops" "$file" 
 			done
 		else
-			select ops in exit w3m links elinks $EDITOR; do
+			select ops in exit "${TBROWSERS[@]}" $EDITOR; do
 				[[ $ops = exit ]] && exit
-				"$ops" "$1" 
+				"$ops" "$file" 
 			done
 		fi
 	;;
 
 	text/*|*/xml|application/x-httpd-php3|application/x-httpd-php4|application/x-httpd-php5|application/x-shellscript)
+		[[ $default == true ]] && \
 		if [[ $TERM = linux && -n $DISPLAY ]]; then
-			$TERMINAL -x "${VISUAL:-${EDITOR:-vis}}" "$@"
+			$TERMINAL -x "${VISUAL:-${EDITOR:-vis}}" "$file"
 		else
-			"${VISUAL:-${EDITOR:-vis}}" "$@"
-		fi
+			"${VISUAL:-${EDITOR:-vis}}" "$file"
+		fi && exit
+		select ops in exit "${XEDITORS[@]}" "${TEDITORS[@]}"; do
+				[[ $ops = exit ]] && exit
+				"$ops" "$file"
+		done
 	;;
 
 	image/*)
+		[[ $default == true ]] && $VIEWER "$file" && exit
 		if [[ -n $DISPLAY ]]; then
-			select ops in exit sxiv feh mtpaint lp gifview gimp; do
-				[[ $ops = exit ]] && exit
-				[[ $ops = gifview ]] && gifview -a "$1" &
-				"$ops" "$1" &> /dev/null &
+			select ops in exit sxiv feh mtpaint lp gifview display gimp; do
+				[[ $ops = exit ]] && break
+				[[ $ops = sxiv ]] && sxiv -fbq "$file" "$PWD" &
+				[[ $ops = gifview ]] && gifview -a "$file" &
+				"$ops" "$file" &> /dev/null &
 			done
 		else
-			fbi "$1"
+			fbi "$file"
 		fi
 	;;
 
 	video/*|application/x-matroska)
+		[[ $default == true ]] && $PLAYER "$file" && exit
 		if [[ -n $DISPLAY ]]; then
 			select ops in exit mpv vlc cvlc ffplay ffprobe mediainfo mplayer; do
-				[[ $ops = exit ]] && exit
-				[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" && exit
-				"$ops" "$1" &
+				[[ $ops = exit ]] && break
+				[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$file" && exit
+				"$ops" "$file" &
 			done
 		else
-			mpv --vo=drm -- "$1"
+			mpv --vo=drm -- "$file"
 		fi
 	;;
 
 	audio/*| application/ogg|application/x-ogg|application/mxf|application/sdp|application/smil|application/x-smil|application/streamingmedia|application/x-streamingmedia|application/vnd.rn-realmedia|application/vnd.rn-realmedia-vbr)
+		[[ $default == true ]] && $PLAYER "$file" && exit
 		select ops in exit mpv vlc cvlc ffplay ffprobe soxi mediainfo mpg123 mplayer; do
-			[[ $ops = exit ]] && exit
-			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$1" &
-			"$ops" "$1" &
+			[[ $ops = exit ]] && break
+			[[ $ops = mpv ]] && mpv --player-operation-mode=pseudo-gui -- "$file" &
+			"$ops" "$file" &
 		done
 	;;
 
 	application/pdf|application/x-pdf)
+		[[ $default == true ]] && $PDFVIEWER "$file" && exit
 		if [[ -n $DISPLAY ]]; then
-			select ops in exit mupdf xournalpp lp pdfinfo xreader evince zathura qpdfview; do
-				[[ $ops = exit ]] && exit
-				$ops "$1" &> /dev/null &
+			select ops in exit "${PDFVIEWERS[@]}"; do
+				[[ $ops = exit ]] && break
+				$ops "$file" &> /dev/null &
 			done
 		else
-			fbgs "$1"
+			fbgs "$file"
 		fi
 	;;
 	
 	application/x-cbz|applilcation/oxps|application/vnd.ms-xpsdocument)
-		select ops in exit mupdf xreader evince zathura; do
-			[[ $ops = exit ]] && exit
-			$ops "$1" &> /dev/null &
+		[[ $default == true ]] && $DOCVIEWER "$file" && exit
+		select ops in exit "${DOCVIEWERS[@]}"; do
+			[[ $ops = exit ]] && break
+			$ops "$file" &> /dev/null &
 		done
 	;;
 	application/octet-stream)
-		case "$1" in
+		case "$file" in
 			*.chm|*.CHM) 
-				select ops in exit kchmviewer xchm chmopen; do
-					[[ $ops = exit ]] && exit
-					$ops "$1" &
+				[[ $default == true ]] && $CHMVIEWER "$file" && exit
+				select ops in exit "${CHMVIEWERS[@]}"; do
+					[[ $ops = exit ]] && break
+					$ops "$file" &
 				done
 			;;
 			*.gpg)
-				gpg -d "$1"
+				gpg -d "$file"
 			;;
 			*.mobi)
-				select ops in exit epy foliate; do
-					case $ops in
-						exit) exit ;;
-						epy) terminator -p Large -x epy.py "$1" ;;
-						*) $ops "$1" &> /dev/null & ;;
-					esac
+				[[ $default == true ]] && $BOOKVIEWER "$file" && exit
+				select ops in exit "${BOOKVIEWERS[@]}"; do
+					[[ $ops = exit ]] && break
+					$ops "$file" &> /dev/null &
 				done
 			;;
 			*)
@@ -112,79 +154,78 @@ case "$mime_type" in
 		esac
 	;;
 	application/vnd.ms-htmlhelp)
-		select ops in exit kchmviewer xchm chmopen; do
-			[[ $ops = exit ]] && exit
-			$ops "$1" &
+		[[ $default == true ]] && $CHMVIEWER "$file" && exit
+		select ops in exit "${CHMVIEWERS[@]}"; do
+			[[ $ops = exit ]] && break
+			$ops "$file" &
 		done
 	;;
 
 	application/vnd.comicbook*)
-		select ops in exit mupdf foliate; do
-			[[ $ops = exit ]] && exit
-			$ops "$1" &
+		select ops in exit llpp mupdf foliate; do
+			[[ $ops = exit ]] && break
+			$ops "$file" &
 		done
 	;;
 
 	application/epub+zip|application/x-mobipocket-ebook)
-		select ops in exit epy mupdf foliate; do
-			case $ops in
-				exit) exit ;;
-				epy) terminator -p Large -x epy.py "$1" ;;
-				*) $ops "$1" &> /dev/null & ;;
-			esac
+		[[ $default == true ]] && $BOOKVIEWER "$file" && exit
+		select ops in exit "${BOOKVIEWERS[@]}"; do
+			[[ $ops = exit ]] && break
+			$ops "$file" &> /dev/null &
 		done
 	;;
 
 	application/pgp-encrypted)
-		gpg -d "$1"
+		gpg -d "$file"
 	;;
 
-	application/*zip*|application/x-?ar|application/x-?z*)
-		case "$1" in
-			*.xoj|*.xopp) xournalpp "$1" &> /dev/null ;;
+	application/*zip*|application/x-?ar|application/x-?z*|application/x-compressed*)
+		case "$file" in
+			*.xoj|*.xopp) xournalpp "$file" &> /dev/null ;;
 			*.cb?) 
-				select ops in exit mupdf foliate als unar; do
-					[[ $ops = exit ]] && exit
-					[[ $ops = als || $ops = unar ]] && "$ops" "$1"
-					"$ops" "$1" &> /dev/null &
+				select ops in exit llpp mupdf foliate als unar; do
+					[[ $ops = exit ]] && break
+					[[ $ops = als || $ops = unar ]] && "$ops" "$file"
+					"$ops" "$file" &> /dev/null &
 				done
 			;;
 			*)
 				select ops in exit als lsar unar aunpack; do
-					[[ $ops = exit ]] && exit
-					[[ $ops = aunpack ]] && aunpack -D "$1"
-					"$ops" "$1"
+					[[ $ops = exit ]] && break
+					[[ $ops = aunpack ]] && aunpack -D "$file"
+					"$ops" "$file"
 				done
 			;;
 		esac
 	;;
 
 	*opendocument*|*openxmlformats*|*msword|*ms-excel|*ms-powerpoint|*abiword|*write*)
-		[[ -n $DISPLAY ]] && libreoffice "$1" --norestore &> /dev/null
+		[[ -n $DISPLAY ]] && libreoffice "$file" --norestore &> /dev/null
 		[[ -z $DISPLAY ]] && \
-			case "$1" in
-				*.odt|*.odp|*.ods|*.sxw) odt2txt "$1" ;;
-				*.doc) antiword "$1" ;;
-				*.docx) docx2txt "$1" - | $PAGER ;;
+			case "$file" in
+				*.odt|*.odp|*.ods|*.sxw) odt2txt "$file" ;;
+				*.doc) antiword "$file" ;;
+				*.docx) docx2txt "$file" - | $PAGER ;;
 				*) echo "unable to open" ;;
 			esac
 	;;
 
 	inode/directory)
-		select ops in exit nnn vifm pcmanfm thunar ranger nautilus; do
-			[[ $ops = exit ]] && exit
-			$ops "$1"
+		select ops in exit "${XFMS[@]}" "${TFMS[@]}"; do
+			[[ $ops = exit ]] && break
+			$ops "$file"
 		done
 	;;
 
 	inode/x-empty)
 		echo "empty file"
-		rm -i "$1"
+		rm -i "$file"
 	;;
 
 	*) 
-		case "$@" in
-			*) echo "no filetype association for $@" ;;
+		case "$file" in
+			*) echo "no filetype association for $file" ;;
 		esac
 	;;
 esac
