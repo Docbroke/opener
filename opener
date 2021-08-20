@@ -5,7 +5,7 @@
 getopts d: name
 case $name in
 	d) file=$OPTARG
-		default=true ;;
+	   default=true ;;
 	*) file="$@" ;;
 esac
 
