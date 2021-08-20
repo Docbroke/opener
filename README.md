@@ -7,6 +7,11 @@ open $file
 
     opener $file
 
+This will give available options to open file with.
+To open file with default association instead use
+    
+    opener -d $file
+
 search file using fzf and open
 
     opener "$(find . -type f | fzf --border --reverse --height 10 --prompt "Open File : ")"
