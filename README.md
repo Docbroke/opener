@@ -1,3 +1,7 @@
+EDIT: Opener is now part of shell-tools https://github.com/Docbroke/shell_tools
+All updates will appear there.
+
+
 # opener
 Shell based file opener using mimetypes as well as file extension inspired from https://github.com/dylanaraps/fff/issues/101. This does not depend on desktop files. 
 
