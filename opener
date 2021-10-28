@@ -76,7 +76,7 @@ case "$mime_type" in
 		fi && exit
 		select ops in exit "${TEDITORS[@]}" "${XEDITORS[@]}"; do
 				[[ $ops = exit ]] && exit
-				$ops "$file" &>/dev/null &
+				$ops "$file"
 		done 2>&1
 	;;
 
